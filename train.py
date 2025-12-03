@@ -1,11 +1,10 @@
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 import json, os
 
-# ================================
-# 1. Persiapan Directory
-# ================================
+# Persiapan Directory
 os.makedirs("models", exist_ok=True)
 
 train_dir = "dataset/train"
@@ -14,9 +13,8 @@ val_dir = "dataset/val"
 IMG_SIZE = 224
 BATCH_SIZE = 32
 
-# ================================
-# 2. Data Augmentation (Sangat Penting)
-# ================================
+
+# Data Augmentation 
 train_datagen = ImageDataGenerator(
     rescale=1./255,
     rotation_range=40,
@@ -49,9 +47,7 @@ val_generator = val_datagen.flow_from_directory(
 with open("models/class_indices.json", "w") as f:
     json.dump(train_generator.class_indices, f)
 
-# ================================
-# 3. Transfer Learning MobileNetV2
-# ================================
+# Transfer Learning MobileNetV2
 base_model = tf.keras.applications.MobileNetV2(
     input_shape=(IMG_SIZE, IMG_SIZE, 3),
     include_top=False,
@@ -77,9 +73,7 @@ model.compile(
 
 model.summary()
 
-# ================================
-# 4. Callbacks untuk training optimal
-# ================================
+# Callbacks untuk training optimal
 checkpoint = ModelCheckpoint(
     "models/model.h5",
     monitor="val_accuracy",
@@ -102,21 +96,14 @@ reduce_lr = ReduceLROnPlateau(
     verbose=1
 )
 
-# ================================
-# 5. Class Weight (atasi dataset tidak seimbang)
-# ================================
-# Hitung jumlah gambar per class
-import numpy as np
-
+# Class Weight (atasi dataset tidak seimbang)
 counts = np.bincount(train_generator.classes)
 max_count = max(counts)
 class_weight = {i: max_count / counts[i] for i in range(len(counts))}
 
 print("Class weight digunakan:", class_weight)
 
-# ================================
-# 6. Train Model
-# ================================
+# Train Model
 history = model.fit(
     train_generator,
     validation_data=val_generator,
